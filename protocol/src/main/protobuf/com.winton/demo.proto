@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package com.winton;
+
+
+// ----
+// API Definition
+// ----
+
+service DemoService {
+  rpc GetMessage (MessageRequest) returns (MessageResponse) {}
+}
+
+
+// ----
+// Request Data Structures
+// ----
+
+message MessageRequest {
+  string requestStr = 1;
+}
+
+
+// ----
+// Response Data Structures
+// ----
+
+message MessageResponse {
+  string responseStr = 1;
+}
