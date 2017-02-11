@@ -32,7 +32,7 @@ class DemoServer (port: Int)(implicit protected val ec: ExecutionContext)
 
   override def getMessage(request: MessageRequest): Future[MessageResponse] = {
     logger.info(s"Received: getMessage(${request.requestStr})")
-    Future(MessageResponse("Hi! You just sent me \"" + request.requestStr + "\""))
+    Future(MessageResponse("Hi! You just sent me " + request.requestStr))
   }
 
 }

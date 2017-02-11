@@ -2,8 +2,7 @@ val commonPlugins = Seq(JavaAppPackaging, DockerPlugin)
 
 val projectSettings = Seq(
   organization in ThisBuild := "com.winton",
-  scalaVersion in ThisBuild := "2.11.8",
-  testOptions in ThisBuild += Tests.Argument("-l", "IntegrationTest")
+  scalaVersion in ThisBuild := "2.11.8"
 )
 
 val scalacSettings = Seq(
@@ -25,17 +24,7 @@ val scalacSettings = Seq(
   connectInput in run := true
 )
 
-val dockerSettings = {
-  import com.typesafe.sbt.packager.docker._
-  Seq(
-    maintainer in Docker := "s.bott",
-    dockerBaseImage := "java:8-jre",
-    // this chmods the file to executable, Windows doesn't set that bit in the zip file.
-    dockerCommands += ExecCmd("RUN", "chmod", "+x", s"${(defaultLinuxInstallLocation in Docker).value}/bin/${executableScriptName.value}")
-  )
-}
-
-lazy val commonSettings = projectSettings ++ scalacSettings ++ dockerSettings
+lazy val commonSettings = projectSettings ++ scalacSettings
 
 lazy val root = (project in file (".")).
   settings(commonSettings: _*).
@@ -47,8 +36,8 @@ lazy val root = (project in file (".")).
   ).
   enablePlugins(commonPlugins: _*).
   aggregate(
-    protocol,
-    server
+    server,
+    sampleClient
   )
 
 lazy val protocol = (project in file ("protocol")).
