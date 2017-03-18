@@ -4,24 +4,30 @@ String GIT_VERSION
 
 node {
 
-  stage 'Checkout'
+  def buildEnv
+  def devAddress
+
+  stage ('Checkout') {
     deleteDir()
     checkout scm
     GIT_VERSION = sh (
       script: 'git describe --tags',
       returnStdout: true
     ).trim()
+  }
 
-  stage 'Build Custom Environment'
-    def build_env = docker.build("build_env:${GIT_VERSION}", 'custom-build-env')
+  stage ('Build Custom Environment') {
+    buildEnv = docker.build("build_env:${GIT_VERSION}", 'custom-build-env')
+  }
 
-  build_env.inside {
+  buildEnv.inside {
 
-    stage 'Build'
+    stage ('Build') {
       sh 'sbt compile'
       sh 'sbt sampleClient/universal:stage'
+    }
 
-    stage 'Test'
+    stage ('Test') {
       parallel (
         'Test Server' : {
           sh 'sbt server/test'
@@ -30,27 +36,31 @@ node {
           sh 'sbt sampleClient/test'
         }
       )
+    }
 
-    stage 'Prepare Docker Image'
+    stage ('Prepare Docker Image') {
       sh 'sbt server/docker:stage'
-
+    }
   }
 
-  stage 'Build and Push Docker Image'
+  stage ('Build and Push Docker Image') {
     withCredentials([[$class: "UsernamePasswordMultiBinding", usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS', credentialsId: 'Docker Hub']]) {
       sh 'docker login --username $DOCKERHUB_USER --password $DOCKERHUB_PASS'
     }
     def serverImage = docker.build("sambott/grpc-test:${GIT_VERSION}", 'server/target/docker/stage')
     serverImage.push()
     sh 'docker logout'
+  }
 
-  stage 'Deploy to DEV'
-    def devAddress = deployContainer("sambott/grpc-test:${GIT_VERSION}", 'DEV')
+  stage ('Deploy to DEV') {
+    devAddress = deployContainer("sambott/grpc-test:${GIT_VERSION}", 'DEV')
+  }
 
-  stage 'Verify Deployment'
-    build_env.inside {
+  stage ('Verify Deployment') {
+    buildEnv.inside {
       sh "sample-client/target/universal/stage/bin/demo-client ${devAddress}"
     }
+  }
 }
 
 stage 'Deploy to LIVE'
